@@ -1,6 +1,8 @@
-import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
+import express from 'express';
 import morgan from 'morgan';
+
+import { playlistController } from './controllers/playlist';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -12,8 +14,6 @@ const app = express();
 app.set('port', process.env.PORT || 3000);
 app.use(morgan('combined'));
 
-app.get('/', (req: Request, res: Response) => {
-  res.json('Hello world!');
-});
+app.get('/', playlistController.get);
 
 export default app;
