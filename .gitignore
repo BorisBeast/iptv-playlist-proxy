@@ -33,3 +33,6 @@ Thumbs.db
 
 # Ignore built ts files
 dist/**/*
+
+# ignore app output
+output
