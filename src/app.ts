@@ -2,10 +2,10 @@ import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
 
-import { playlistController } from './controllers/playlist';
-
 // Load environment variables from .env file
 dotenv.config();
+
+import { playlistController } from './controllers/playlist';
 
 // Create Express server
 const app = express();

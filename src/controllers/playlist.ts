@@ -2,18 +2,22 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import request from 'request-promise-native';
 
+import { logger } from '../util/logger';
+
 class PlaylistController {
   constructor() {
     this.get = this.get.bind(this);
   }
 
   get(req: Request, res: Response) {
+    logger.info('requesting playlist from ' + process.env.PLAYLIST_URL);
     request({
       uri: process.env.PLAYLIST_URL,
       simple: true,
       resolveWithFullResponse: true
     })
       .then(response => {
+        logger.info('request successful');
         this.sendFile(response.body, res);
       })
       .catch(error => {
@@ -23,6 +27,7 @@ class PlaylistController {
         // } else {
         //   res.status(500).send(error.message);
         // }
+        logger.error('request failed %o', error);
         this.sendFile(undefined, res);
       });
   }
