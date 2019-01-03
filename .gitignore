@@ -37,3 +37,6 @@ dist/**/*
 # ignore app output
 output
 log
+
+# ignore Docker cross-build files
+qemu-aarch64-static
