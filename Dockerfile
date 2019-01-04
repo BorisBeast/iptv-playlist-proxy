@@ -18,7 +18,8 @@ RUN npm install
 # RUN npm install --only=production
 
 # Bundle app source
-COPY . .
+COPY tsconfig.json .env ./
+COPY src ./src
 
 #compile app
 RUN npm run build
