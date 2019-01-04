@@ -12,3 +12,14 @@ npm start
 ```
 npm run watch-debug
 ```
+
+## Docker
+### Build:
+```
+sudo docker build -t beast/iptv-playlist-proxy .
+```
+
+### Run:
+```
+sudo docker run -p 8000:8080 --volume=/home/beast/iptv-playlist-proxy/log:/usr/src/app/log --volume=/home/beast/iptv-playlist-proxy/output:/usr/src/app/output -d --rm beast/iptv-playlist-proxy
+```
