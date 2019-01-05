@@ -23,3 +23,8 @@ sudo docker build -t beast/iptv-playlist-proxy .
 ```
 sudo docker run -p 8000:8080 --volume=/home/beast/iptv-playlist-proxy/log:/usr/src/app/log --volume=/home/beast/iptv-playlist-proxy/output:/usr/src/app/output -d --rm beast/iptv-playlist-proxy
 ```
+
+## Autostart on Libreelec:
+copy `autostart.sh` to `/storage/.config/`
+
+(iptv-playlist-proxy.service doesn't work, it starts after kodi)
