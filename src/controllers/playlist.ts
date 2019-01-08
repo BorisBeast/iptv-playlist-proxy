@@ -1,7 +1,8 @@
-import { ChildProcess, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import { Request, Response } from 'express';
 import fs from 'fs';
 import request from 'request-promise-native';
+import util from 'util';
 
 import { logger } from '../util/logger';
 
@@ -23,7 +24,8 @@ class PlaylistController {
       })
       .catch(error => {
         logger.error(
-          'playlist request failed %o', JSON.parse(JSON.stringify(error))
+          'playlist request failed %o',
+          JSON.parse(JSON.stringify(error))
         );
         return this.diffAndSendFile(undefined, res);
       })
@@ -36,11 +38,14 @@ class PlaylistController {
     const cachedFilePath = process.env.OUTPUT_DIR + '/tv_channels.m3u';
     let cachedFileContent: string;
     let shouldCache = false;
+    const readFile = util.promisify(fs.readFile);
+    const writeFile = util.promisify(fs.writeFile);
+    const fileExists = util.promisify(fs.exists);
 
     if (!fileContent) {
       try {
         logger.info('reading cached file');
-        cachedFileContent = fs.readFileSync(cachedFilePath).toString();
+        cachedFileContent = await readFile(cachedFilePath, 'utf8');
       } catch (err) {
         logger.error('reading cached file failed %o', err);
         response.status(404).send('File not found');
@@ -56,14 +61,11 @@ class PlaylistController {
       .send(fileContent || cachedFileContent);
 
     if (fileContent) {
-      if (fs.existsSync(cachedFilePath)) {
+      if (await fileExists(cachedFilePath)) {
         logger.info('calculating diff');
         let changes = '';
         try {
-          const diffProcess = spawn('diff', ['-u', cachedFilePath, '-']);
-          diffProcess.stdin.write(fileContent, () => diffProcess.stdin.end());
-
-          changes = await this.onDiffExit(diffProcess);
+          changes = await this.calculateDiff(fileContent, cachedFilePath);
         } catch (err) {
           logger.error('calculating diff failed %o', err);
         }
@@ -75,7 +77,7 @@ class PlaylistController {
             const diffPath =
               process.env.OUTPUT_DIR + '/tv_channels_' + Date.now() + '.diff';
             logger.info('writing diff file %s', diffPath);
-            fs.writeFileSync(diffPath, changes);
+            await writeFile(diffPath, changes);
           } catch (err) {
             logger.error('writing diff file failed %o', err);
           }
@@ -90,27 +92,33 @@ class PlaylistController {
     if (shouldCache) {
       try {
         logger.info('caching file');
-        fs.writeFileSync(cachedFilePath, fileContent);
+        await writeFile(cachedFilePath, fileContent);
       } catch (err) {
         logger.error('caching failed %o', err);
       }
     }
   }
 
-  private onDiffExit(childProcess: ChildProcess): Promise<string> {
+  private calculateDiff(
+    fileContent: string,
+    cachedFilePath: string
+  ): Promise<string> {
+    const diffProcess = spawn('diff', ['-u', cachedFilePath, '-']);
+    diffProcess.stdin.write(fileContent, () => diffProcess.stdin.end());
+
     return new Promise((resolve, reject) => {
       let out = '';
-      childProcess.once('exit', (code: number, signal: string) => {
+      diffProcess.once('exit', (code: number, signal: string) => {
         if (code === 0 || code === 1) {
           resolve(out);
         } else {
           reject(new Error('Exit with error code: ' + code));
         }
       });
-      childProcess.once('error', (err: Error) => {
+      diffProcess.once('error', (err: Error) => {
         reject(err);
       });
-      childProcess.stdout.on('data', chunk => (out += chunk));
+      diffProcess.stdout.on('data', chunk => (out += chunk));
     });
   }
 }
