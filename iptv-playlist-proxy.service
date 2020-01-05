@@ -1,23 +1,16 @@
 [Unit]
-Description=%p container
-Requires=service.system.docker.service
-After=service.system.docker.service
+Description=iptv-playlist-proxy coreelec startup service
+After=network.target
 Before=kodi.service
 
 [Service]
-Restart=always
-RestartSec=10s
-TimeoutStartSec=0
-ExecStartPre=-/bin/sh -c "mkdir -p /storage/%p/output /storage/%p/log"
-ExecStart=/storage/.kodi/addons/service.system.docker/bin/docker run \
-          --rm \
-          --name=%p \
-          --hostname=libreelec-%p \
-          --volume=/storage/%p/output:/usr/src/app/output \
-          --volume=/storage/%p/log:/usr/src/app/log \
-          --publish=8000:8080 \
-          beast/%p
-ExecStop=/storage/.kodi/addons/service.system.docker/bin/docker stop %p
+Type=simple
+User=root
+Environment="PATH=/opt/bin:/opt/sbin:/usr/bin:/usr/sbin"
+Environment="PORT=8000"
+WorkingDirectory=/storage/iptv-playlist-proxy/
+ExecStart=/opt/bin/node dist/server.js
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
